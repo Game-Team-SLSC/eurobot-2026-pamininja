@@ -125,16 +125,16 @@ void sensorTask(void *param) {
       motorLeft->stopMove();
       motorRight->stopMove();
 
-      Serial.println("⛔ Obstacle détecté → arrêt moteurs");
+      Serial.println(" Obstacle détecté → arrêt moteurs");
     }
 
     if (d >= OBSTACLE_CM && obstacle) {
       obstacle = false;
       pauseMotors = false;
 
-      Serial.println("✅ Obstacle disparu → reprise trajectoire");
+      Serial.println("  Obstacle disparu → reprise trajectoire");
     }
-
+// hello
     vTaskDelay(pdMS_TO_TICKS(80));
   }
 }
@@ -287,7 +287,7 @@ void setup() {
   WiFi.mode(WIFI_STA);
 
   if (esp_now_init() != ESP_OK) {
-    Serial.println("❌ ESP-NOW FAIL");
+    Serial.println(" ESP-NOW FAIL");
     return;
   }
 
@@ -297,11 +297,11 @@ void setup() {
   peerInfo.encrypt = false;
 
   if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    Serial.println("❌ Erreur ajout peer");
+    Serial.println(" Erreur ajout peer");
     return;
   }
 
-  Serial.println("🚀 Prêt - attente aimant...");
+  Serial.println(" Prêt - attente aimant...");
 
 }
 
@@ -314,17 +314,17 @@ void loop() {
   if (magnetState && !magnetTriggered) {
     magnetTriggered = true;
 
-    Serial.println("🧲 AIMANT DETECTÉ → START ENVOI");
+    Serial.println(" AIMANT DETECTÉ → START ENVOI");
 
     // Lecture couleur UNE SEULE FOIS
     if (digitalRead(MODE_SWITCH_PIN) == HIGH) {
       message = 0;
       selectedPath = PATH_YELLOW;
-      Serial.println("🟡 JAUNE");
+      Serial.println("JAUNE");
     } else {
       message = 1;
       selectedPath = PATH_BLUE;
-      Serial.println("🔵 BLEU");
+      Serial.println("BLEU");
     }
 
     // Création des tâches FreeRTOS après détection
@@ -356,10 +356,10 @@ void loop() {
     esp_err_t result = esp_now_send(receiverMac, &message, sizeof(message));
 
     if (result == ESP_OK) {
-      Serial.print("📡 Envoyé : ");
+      Serial.print(" Envoyé : ");
       Serial.println(message);
     } else {
-      Serial.println("❌ Erreur envoi");
+      Serial.println(" Erreur envoi");
     }
     updateServo();
   }
