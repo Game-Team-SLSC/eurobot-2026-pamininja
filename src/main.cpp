@@ -258,6 +258,8 @@ void setup() {
 
   Serial.begin(115200);
 
+  delay(1000); // attendre que le moniteur série soit prêt
+
   pinMode(US_TRIG_PIN, OUTPUT);
   pinMode(US_ECHO_PIN, INPUT);
   pinMode(MODE_SWITCH_PIN, INPUT_PULLUP);
