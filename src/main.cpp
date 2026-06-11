@@ -13,9 +13,6 @@
 #define DIR2_PIN  D3
 #define EN2_PIN   D9
 
-#define US_TRIG_PIN 12
-#define US_ECHO_PIN 11
-
 #define MODE_SWITCH_PIN  GPIO_NUM_42
 #define MAGNET_PIN      GPIO_NUM_13
 
@@ -55,7 +52,6 @@ FastAccelStepper *motorRight;
 Servo headServo;
 
 TaskHandle_t motorTaskHandle = NULL;
-TaskHandle_t sensorTaskHandle = NULL;
 
 volatile bool pauseMotors = false;
 
@@ -96,49 +92,6 @@ void activatePump(unsigned long duration) {
   delay(duration);
   digitalWrite(PUMP_PIN, LOW);
 }
-
-float readUltrasonic() {
-  digitalWrite(US_TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(US_TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(US_TRIG_PIN, LOW);
-
-  long duration = pulseIn(US_ECHO_PIN, HIGH, 30000);
-  if (duration == 0) return 999.0f;
-
-  return duration * 0.0343f / 2.0f;
-}
-
-void sensorTask(void *param) {
-
-  bool obstacle = false;
-
-  while (true) {
-
-    float d = readUltrasonic();
-
-    if (d < OBSTACLE_CM && !obstacle) {
-      obstacle = true;
-      pauseMotors = true;
-
-      motorLeft->stopMove();
-      motorRight->stopMove();
-
-      Serial.println(" Obstacle détecté → arrêt moteurs");
-    }
-
-    if (d >= OBSTACLE_CM && obstacle) {
-      obstacle = false;
-      pauseMotors = false;
-
-      Serial.println("  Obstacle disparu → reprise trajectoire");
-    }
-// hello
-    vTaskDelay(pdMS_TO_TICKS(80));
-  }
-}
-
 
 void waitMotors() {
   while (motorLeft->isRunning() || motorRight->isRunning()) {
@@ -190,15 +143,12 @@ void runYellowPath() {
   safeMove(3300, -3300);
   safeMove(-700, -700);
   safeMove(-1500,1500);
-  safeMove(3200, -3200);
-  safeMove(-3200, 3200);
+  safeMove(2900, -2900);
+  safeMove(-2900, 2900);
   safeMove(700, 700);
   safeMove(2000, -2000);
   safeMove(-700, -700);
   safeMove(-1500,1500);
-  safeMove(3200, -3200);
-  safeMove(-3200, 3200);
-  delay(70000);
   safeMove(3300, -3300);
 
   setServoPosition(90); 
@@ -213,10 +163,10 @@ void runBluePath() {
    safeMove(1300, -1300);   // avancer
    activatePump(PUMP_ACTIVE_MS);  // active la pompe via MOSFET
   safeMove(700, 700); 
- safeMove(3400, -3400);
+ safeMove(3200, -3200);
   setServoPosition(90);    // activate servo at 90 degrees
   setServoPosition(0);     // activate servo at 0 degrees
-  safeMove(-3400, 3400);
+  safeMove(-3200, 3200);
   safeMove(-700, -700); // tourner G
   safeMove(3300, -3300);
   safeMove(700, 700);
@@ -227,9 +177,6 @@ void runBluePath() {
   safeMove(2000, -2000);
   safeMove(700, 700);
   safeMove(-1500,1500);
-  safeMove(3200, -3200);
-  safeMove(-3200, 3200);
-  delay(70000);
   safeMove(3300, -3300);
 
   setServoPosition(90); 
@@ -260,8 +207,6 @@ void setup() {
 
   delay(1000); // attendre que le moniteur série soit prêt
 
-  pinMode(US_TRIG_PIN, OUTPUT);
-  pinMode(US_ECHO_PIN, INPUT);
   pinMode(MODE_SWITCH_PIN, INPUT_PULLUP);
   pinMode(MAGNET_PIN, INPUT_PULLUP);
   pinMode(PUMP_PIN, OUTPUT);
@@ -338,16 +283,6 @@ void loop() {
       2,
       &motorTaskHandle,
       1   // Core 1
-    );
-
-    xTaskCreatePinnedToCore(
-      sensorTask,
-      "Sensor Task",
-      2048,
-      NULL,
-      1,
-      &sensorTaskHandle,
-      0   // Core 0
     );
   }
 
